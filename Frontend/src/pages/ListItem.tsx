@@ -22,6 +22,7 @@ import {
   Sparkles,
   CheckCircle
 } from 'lucide-react';
+import { apiService } from '@/services/api';
 
 const categories = [
   'Dresses', 'Tops', 'Bottoms', 'Jackets', 'Sweaters', 'Shoes', 
@@ -31,6 +32,39 @@ const categories = [
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const conditions = ['Excellent', 'Good', 'Fair'];
 
+const brands = [
+  'Nike', 'Adidas', 'Zara', 'H&M', 'Uniqlo', 'Levi\'s', 'Gap', 'Forever 21',
+  'Urban Outfitters', 'American Eagle', 'Hollister', 'Aeropostale', 'Vans',
+  'Converse', 'Puma', 'Under Armour', 'The North Face', 'Patagonia',
+  'Columbia', 'Tommy Hilfiger', 'Calvin Klein', 'Ralph Lauren', 'Other'
+];
+
+const colors = [
+  'Black', 'White', 'Blue', 'Red', 'Green', 'Yellow', 'Pink', 'Purple',
+  'Brown', 'Gray', 'Orange', 'Navy', 'Burgundy', 'Olive', 'Beige', 'Cream',
+  'Gold', 'Silver', 'Multi', 'Other'
+];
+
+const materials = [
+  'Cotton', 'Polyester', 'Wool', 'Silk', 'Linen', 'Denim', 'Leather',
+  'Suede', 'Velvet', 'Satin', 'Chiffon', 'Lace', 'Mesh', 'Fleece',
+  'Spandex', 'Rayon', 'Acrylic', 'Nylon', 'Other'
+];
+
+const IMAGE_API_URL = import.meta.env.VITE_IMAGE_API_URL;
+
+async function uploadImages(files: FileList): Promise<string[]> {
+  const formData = new FormData();
+  Array.from(files).forEach(file => formData.append('file', file));
+  const res = await fetch(`${IMAGE_API_URL}/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Image upload failed');
+  const data = await res.json();
+  return data.map((img: { url: string }) => img.url);
+}
+
 export default function ListItem() {
   const [images, setImages] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -39,25 +73,33 @@ export default function ListItem() {
     category: '',
     size: '',
     condition: '',
+    points: 100,
+    price: 0,
+    originalPrice: 0,
+    brand: '',
+    brandOther: '',
+    color: '',
+    colorOther: '',
+    material: '',
+    materialOther: '',
+    measurements: { chest: '', length: '', sleeves: '' },
     tags: '',
-    points: 100
+    likes: 0,
+    views: 0,
+    postedDate: '',
+    pointsRedemption: 0,
+    seller: { name: '', avatar: '', rating: 0, reviews: 0, joinDate: '' },
   });
   const [dragOver, setDragOver] = useState(false);
 
-  const handleImageUpload = (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
-    
-    Array.from(files).forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            setImages(prev => [...prev, e.target!.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+    try {
+      const urls = await uploadImages(files);
+      setImages(prev => [...prev, ...urls]);
+    } catch (err) {
+      // handle error, e.g. show toast
+    }
   };
 
   const removeImage = (index: number) => {
@@ -70,17 +112,48 @@ export default function ListItem() {
     handleImageUpload(e.dataTransfer.files);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting item:', { ...formData, images });
-    // Handle form submission
+    try {
+      // Handle "Other" options
+      const finalBrand = formData.brand === 'Other' ? formData.brandOther : formData.brand;
+      const finalColor = formData.color === 'Other' ? formData.colorOther : formData.color;
+      const finalMaterial = formData.material === 'Other' ? formData.materialOther : formData.material;
+
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        size: formData.size,
+        condition: formData.condition,
+        points: formData.points,
+        price: formData.points, // Use points as price for compatibility
+        originalPrice: formData.originalPrice,
+        brand: finalBrand,
+        color: finalColor,
+        material: finalMaterial,
+        measurements: formData.measurements,
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+        likes: formData.likes,
+        views: formData.views,
+        postedDate: formData.postedDate,
+        pointsRedemption: formData.pointsRedemption,
+        seller: formData.seller,
+        images,
+      };
+      await apiService.addProduct(payload);
+      // Optionally show a success toast or redirect
+      alert('Product listed successfully!');
+    } catch (err) {
+      alert('Failed to list product.');
+    }
   };
 
   const suggestedTags = ['vintage', 'designer', 'casual', 'formal', 'summer', 'winter', 'trendy', 'classic'];
 
   return (
     <div className="min-h-screen">
-      <Header isAuthenticated={true} user={{ name: 'You', points: 850 }} />
+      <Header />
       
       <div className="pt-24 pb-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
@@ -318,6 +391,241 @@ export default function ListItem() {
                       <Sparkles className="h-4 w-4 text-accent" />
                       <span>Our AI suggests this value based on your item details</span>
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Additional Product Details */}
+            <Card className="glass-elevated border-glass-border/50">
+              <CardHeader>
+                <CardTitle className="gradient-text text-center">Additional Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Original Price */}
+                <div className="space-y-2">
+                  <Label htmlFor="originalPrice" className="text-sm font-medium">Original Price</Label>
+                  <Input
+                    id="originalPrice"
+                    type="number"
+                    value={formData.originalPrice}
+                    onChange={e => setFormData(prev => ({ ...prev, originalPrice: parseFloat(e.target.value) || 0 }))}
+                    className="glass border-glass-border/50"
+                  />
+                </div>
+                {/* Brand */}
+                <div className="space-y-2">
+                  <Label htmlFor="brand" className="text-sm font-medium">Brand</Label>
+                  <Select 
+                    value={formData.brand} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, brand: value }))}
+                  >
+                    <SelectTrigger className="glass border-glass-border/50">
+                      <SelectValue placeholder="Select brand" />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      {brands.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Other" key="other">
+                        Other
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.brand === "Other" && (
+                    <Input
+                      id="brandOther"
+                      placeholder="Enter brand name"
+                      value={formData.brandOther}
+                      onChange={e => setFormData(prev => ({ ...prev, brandOther: e.target.value }))}
+                      className="glass border-glass-border/50 mt-2"
+                    />
+                  )}
+                </div>
+                {/* Color */}
+                <div className="space-y-2">
+                  <Label htmlFor="color" className="text-sm font-medium">Color</Label>
+                  <Select 
+                    value={formData.color} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, color: value }))}
+                  >
+                    <SelectTrigger className="glass border-glass-border/50">
+                      <SelectValue placeholder="Select color" />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      {colors.map((color) => (
+                        <SelectItem key={color} value={color}>
+                          {color}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Other" key="other">
+                        Other
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.color === "Other" && (
+                    <Input
+                      id="colorOther"
+                      placeholder="Enter color name"
+                      value={formData.colorOther}
+                      onChange={e => setFormData(prev => ({ ...prev, colorOther: e.target.value }))}
+                      className="glass border-glass-border/50 mt-2"
+                    />
+                  )}
+                </div>
+                {/* Material */}
+                <div className="space-y-2">
+                  <Label htmlFor="material" className="text-sm font-medium">Material</Label>
+                  <Select 
+                    value={formData.material} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, material: value }))}
+                  >
+                    <SelectTrigger className="glass border-glass-border/50">
+                      <SelectValue placeholder="Select material" />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      {materials.map((material) => (
+                        <SelectItem key={material} value={material}>
+                          {material}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Other" key="other">
+                        Other
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.material === "Other" && (
+                    <Input
+                      id="materialOther"
+                      placeholder="Enter material name"
+                      value={formData.materialOther}
+                      onChange={e => setFormData(prev => ({ ...prev, materialOther: e.target.value }))}
+                      className="glass border-glass-border/50 mt-2"
+                    />
+                  )}
+                </div>
+                {/* Measurements */}
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chest" className="text-sm font-medium">Chest</Label>
+                    <Input
+                      id="chest"
+                      value={formData.measurements.chest}
+                      onChange={e => setFormData(prev => ({ ...prev, measurements: { ...prev.measurements, chest: e.target.value } }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="length" className="text-sm font-medium">Length</Label>
+                    <Input
+                      id="length"
+                      value={formData.measurements.length}
+                      onChange={e => setFormData(prev => ({ ...prev, measurements: { ...prev.measurements, length: e.target.value } }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sleeves" className="text-sm font-medium">Sleeves</Label>
+                    <Input
+                      id="sleeves"
+                      value={formData.measurements.sleeves}
+                      onChange={e => setFormData(prev => ({ ...prev, measurements: { ...prev.measurements, sleeves: e.target.value } }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                </div>
+                {/* Tags */}
+                <div className="space-y-2">
+                  <Label htmlFor="tags" className="text-sm font-medium">Tags (comma separated)</Label>
+                  <Input
+                    id="tags"
+                    value={formData.tags}
+                    onChange={e => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                    className="glass border-glass-border/50"
+                  />
+                </div>
+                {/* Likes, Views, Posted Date, Points Redemption */}
+                <div className="grid md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="likes" className="text-sm font-medium">Likes</Label>
+                    <Input
+                      id="likes"
+                      type="number"
+                      value={formData.likes}
+                      onChange={e => setFormData(prev => ({ ...prev, likes: parseInt(e.target.value) || 0 }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="views" className="text-sm font-medium">Views</Label>
+                    <Input
+                      id="views"
+                      type="number"
+                      value={formData.views}
+                      onChange={e => setFormData(prev => ({ ...prev, views: parseInt(e.target.value) || 0 }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postedDate" className="text-sm font-medium">Posted Date</Label>
+                    <Input
+                      id="postedDate"
+                      type="date"
+                      value={formData.postedDate}
+                      onChange={e => setFormData(prev => ({ ...prev, postedDate: e.target.value }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pointsRedemption" className="text-sm font-medium">Points Redemption</Label>
+                    <Input
+                      id="pointsRedemption"
+                      type="number"
+                      value={formData.pointsRedemption}
+                      onChange={e => setFormData(prev => ({ ...prev, pointsRedemption: parseInt(e.target.value) || 0 }))}
+                      className="glass border-glass-border/50"
+                    />
+                  </div>
+                </div>
+                {/* Seller Info */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Seller Info</Label>
+                  <div className="grid md:grid-cols-5 gap-4">
+                    <Input
+                      placeholder="Name"
+                      value={formData.seller.name}
+                      onChange={e => setFormData(prev => ({ ...prev, seller: { ...prev.seller, name: e.target.value } }))}
+                      className="glass border-glass-border/50"
+                    />
+                    <Input
+                      placeholder="Avatar URL"
+                      value={formData.seller.avatar}
+                      onChange={e => setFormData(prev => ({ ...prev, seller: { ...prev.seller, avatar: e.target.value } }))}
+                      className="glass border-glass-border/50"
+                    />
+                    <Input
+                      placeholder="Rating"
+                      type="number"
+                      value={formData.seller.rating}
+                      onChange={e => setFormData(prev => ({ ...prev, seller: { ...prev.seller, rating: parseFloat(e.target.value) || 0 } }))}
+                      className="glass border-glass-border/50"
+                    />
+                    <Input
+                      placeholder="Reviews"
+                      type="number"
+                      value={formData.seller.reviews}
+                      onChange={e => setFormData(prev => ({ ...prev, seller: { ...prev.seller, reviews: parseInt(e.target.value) || 0 } }))}
+                      className="glass border-glass-border/50"
+                    />
+                    <Input
+                      placeholder="Join Date"
+                      type="date"
+                      value={formData.seller.joinDate}
+                      onChange={e => setFormData(prev => ({ ...prev, seller: { ...prev.seller, joinDate: e.target.value } }))}
+                      className="glass border-glass-border/50"
+                    />
                   </div>
                 </div>
               </CardContent>

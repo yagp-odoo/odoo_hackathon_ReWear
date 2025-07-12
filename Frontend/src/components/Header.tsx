@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { getCartCount } = useCart();
-  const { getWishlistCount } = useWishlist();
+  const { wishlist } = useWishlist();
   const { user, isAuthenticated, logout } = useAuth();
 
   if (!isAuthenticated) {
@@ -90,9 +90,9 @@ export const Header = () => {
                   <Link to="/wishlist">
                     <Button variant="ghost" size="icon" className="hover-glow relative">
                       <Heart className="h-5 w-5" />
-                      {getWishlistCount() > 0 && (
+                      {wishlist.length > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {getWishlistCount()}
+                          {wishlist.length}
                         </span>
                       )}
                     </Button>

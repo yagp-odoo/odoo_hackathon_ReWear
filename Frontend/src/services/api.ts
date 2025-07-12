@@ -50,14 +50,35 @@ export interface Product {
   title: string;
   description?: string;
   price: number;
+  originalPrice?: number;
+  category?: string;
   size?: string;
   condition?: string;
   points?: number;
   owner?: string;
-  category?: string;
   images?: string[];
   owner_id?: string;
   status?: string;
+  brand?: string;
+  color?: string;
+  material?: string;
+  measurements?: {
+    chest?: string;
+    length?: string;
+    sleeves?: string;
+  };
+  tags?: string[];
+  likes?: number;
+  views?: number;
+  postedDate?: string;
+  pointsRedemption?: number;
+  seller?: {
+    name: string;
+    avatar?: string;
+    rating?: number;
+    reviews?: number;
+    joinDate?: string;
+  };
 }
 
 class ApiService {
@@ -137,10 +158,10 @@ class ApiService {
 
   async checkAuth(): Promise<boolean> {
     try {
-      await this.request('/checkAuthentication', {
+      const response = await this.request<{message: string}>('/checkAuthentication', {
         method: 'POST',
       });
-      return true;
+      return response.message === 'Authenticated';
     } catch {
       return false;
     }
@@ -208,17 +229,90 @@ class ApiService {
       method: 'DELETE' }, true);
   }
 
-  async searchProducts(params: { name?: string; category?: string; min_price?: number; max_price?: number }): Promise<Product[]> {
+  async searchProducts(params: { title?: string; category?: string; min_price?: number; max_price?: number }): Promise<Product[]> {
     const query = new URLSearchParams();
-    if (params.name) query.append('name', params.name);
+    if (params.title) query.append('title', params.title);
     if (params.category) query.append('category', params.category);
     if (params.min_price !== undefined) query.append('min_price', params.min_price.toString());
     if (params.max_price !== undefined) query.append('max_price', params.max_price.toString());
     return this.request<Product[]>(`/product/search?${query.toString()}`, { method: 'GET' }, true);
   }
 
+  async advancedSearchProducts(params: {
+    title?: string;
+    category?: string;
+    brand?: string;
+    color?: string;
+    size?: string;
+    condition?: string;
+    min_price?: number;
+    max_price?: number;
+    owner_id?: string;
+  }): Promise<Product[]> {
+    const query = new URLSearchParams();
+    if (params.title) query.append('title', params.title);
+    if (params.category) query.append('category', params.category);
+    if (params.brand) query.append('brand', params.brand);
+    if (params.color) query.append('color', params.color);
+    if (params.size) query.append('size', params.size);
+    if (params.condition) query.append('condition', params.condition);
+    if (params.min_price !== undefined) query.append('min_price', params.min_price.toString());
+    if (params.max_price !== undefined) query.append('max_price', params.max_price.toString());
+    if (params.owner_id) query.append('owner_id', params.owner_id);
+    return this.request<Product[]>(`/product/advanced-search?${query.toString()}`, { method: 'GET' }, true);
+  }
+
   async getProductsByUser(userId: string): Promise<Product[]> {
     return this.request<Product[]>(`/product/user/${userId}`, { method: 'GET' }, true);
+  }
+
+  // Wishlist endpoints
+  async addToWishlist(productId: string): Promise<{ message: string; wishlist_item: any }> {
+    // First get user info from auth service
+    const userInfo = await this.request<{user: {email: string}}>('/user/me', {
+      method: 'GET',
+    });
+    
+    // Then call product service with user email
+    return this.request<{ message: string; wishlist_item: any }>(`/wishlist/add?product_id=${productId}&user_email=${userInfo.user.email}`, {
+      method: 'POST',
+    }, true);
+  }
+
+  async removeFromWishlist(productId: string): Promise<{ message: string }> {
+    // First get user info from auth service
+    const userInfo = await this.request<{user: {email: string}}>('/user/me', {
+      method: 'GET',
+    });
+    
+    // Then call product service with user email
+    return this.request<{ message: string }>(`/wishlist/remove?product_id=${productId}&user_email=${userInfo.user.email}`, {
+      method: 'DELETE',
+    }, true);
+  }
+
+  async getWishlist(): Promise<any[]> {
+    // First get user info from auth service
+    const userInfo = await this.request<{user: {email: string}}>('/user/me', {
+      method: 'GET',
+    });
+    
+    // Then call product service with user email
+    return this.request<any[]>(`/wishlist?user_email=${userInfo.user.email}`, {
+      method: 'GET',
+    }, true);
+  }
+
+  async checkWishlistStatus(productId: string): Promise<{ in_wishlist: boolean }> {
+    // First get user info from auth service
+    const userInfo = await this.request<{user: {email: string}}>('/user/me', {
+      method: 'GET',
+    });
+    
+    // Then call product service with user email
+    return this.request<{ in_wishlist: boolean }>(`/wishlist/check/${productId}?user_email=${userInfo.user.email}`, {
+      method: 'GET',
+    }, true);
   }
 }
 

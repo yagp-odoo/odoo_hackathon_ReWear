@@ -44,25 +44,120 @@ const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // You can add filter/search logic here
+        // Check if we have multiple filters that can be handled by advanced search
+        const hasMultipleFilters = (
+          selectedSize !== 'All' || 
+          selectedCondition !== 'All' || 
+          selectedBrand !== 'All' || 
+          selectedColor !== 'All'
+        );
+
+        // Use advanced search if we have multiple filters, otherwise use basic search
         let fetched;
-        if (searchQuery || selectedCategory !== 'All') {
-          fetched = await apiService.searchProducts({
-            name: searchQuery || undefined,
-            category: selectedCategory !== 'All' ? selectedCategory : undefined
-          });
+        if (hasMultipleFilters) {
+          const searchParams: any = {};
+          
+          if (searchQuery) {
+            searchParams.title = searchQuery;
+          }
+          
+          if (selectedCategory !== 'All') {
+            searchParams.category = selectedCategory;
+          }
+          
+          if (selectedSize !== 'All') {
+            searchParams.size = selectedSize;
+          }
+          
+          if (selectedCondition !== 'All') {
+            searchParams.condition = selectedCondition;
+          }
+          
+          if (selectedBrand !== 'All') {
+            searchParams.brand = selectedBrand;
+          }
+          
+          if (selectedColor !== 'All') {
+            searchParams.color = selectedColor;
+          }
+          
+          if (priceRange[0] > 0 || priceRange[1] < 500) {
+            if (priceRange[0] > 0) searchParams.min_price = priceRange[0];
+            if (priceRange[1] < 500) searchParams.max_price = priceRange[1];
+          }
+
+          fetched = await apiService.advancedSearchProducts(searchParams);
         } else {
-          fetched = await apiService.getAllProducts();
+          // Build basic search parameters
+          const searchParams: any = {};
+          
+          if (searchQuery) {
+            searchParams.title = searchQuery;
+          }
+          
+          if (selectedCategory !== 'All') {
+            searchParams.category = selectedCategory;
+          }
+          
+          if (priceRange[0] > 0 || priceRange[1] < 500) {
+            if (priceRange[0] > 0) searchParams.min_price = priceRange[0];
+            if (priceRange[1] < 500) searchParams.max_price = priceRange[1];
+          }
+
+          // Use search API if any filters are applied, otherwise get all products
+          if (Object.keys(searchParams).length > 0) {
+            fetched = await apiService.searchProducts(searchParams);
+          } else {
+            fetched = await apiService.getAllProducts();
+          }
         }
-        setProducts(fetched);
+
+        // Apply client-side sorting
+        let sortedProducts = [...fetched];
+
+        // Apply sorting
+        switch (sortBy) {
+          case 'Price: Low to High':
+            sortedProducts.sort((a, b) => a.price - b.price);
+            break;
+          case 'Price: High to Low':
+            sortedProducts.sort((a, b) => b.price - a.price);
+            break;
+          case 'Most Popular':
+            sortedProducts.sort((a, b) => (b.views || 0) - (a.views || 0));
+            break;
+          case 'Most Liked':
+            sortedProducts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            break;
+          case 'Newest':
+          case 'Recently Added':
+            sortedProducts.sort((a, b) => {
+              const dateA = a.postedDate ? new Date(a.postedDate).getTime() : 0;
+              const dateB = b.postedDate ? new Date(b.postedDate).getTime() : 0;
+              return dateB - dateA;
+            });
+            break;
+          default:
+            // Keep original order
+            break;
+        }
+
+        setProducts(sortedProducts);
       } catch (error) {
+        console.error('Error fetching products:', error);
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchProducts();
-  }, [searchQuery, selectedCategory]);
+
+    // Add debouncing for search query
+    const timeoutId = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, selectedCategory, selectedSize, selectedCondition, selectedBrand, selectedColor, priceRange, sortBy]);
 
   const activeFilters = [
     selectedCategory !== 'All' && selectedCategory,
@@ -288,43 +383,72 @@ const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most
 
           {/* Results */}
           <div className="mb-6">
-            <p className="text-muted-foreground">
-              Showing <span className="text-foreground font-semibold">{products.length}</span> items
-              {searchQuery && (
-                <span> for "<span className="text-primary">{searchQuery}</span>"</span>
-              )}
-            </p>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Searching...</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">
+                Showing <span className="text-foreground font-semibold">{products.length}</span> items
+                {searchQuery && (
+                  <span> for "<span className="text-primary">{searchQuery}</span>"</span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Items Grid */}
-          <div className={`grid gap-6 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : 'grid-cols-1'
-          }`}>
-            {products.map((item) => (
-              <ItemCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                description={item.description || ''}
-                images={item.images || []}
-                category={item.category || ''}
-                size={item.size || 'N/A'}
-                condition={item.condition || 'N/A'}
-                points={item.points || item.price || 0}
-                owner={{
-                  name: item.owner || item.owner_id || 'Unknown',
-                  avatar: '',
-                  rating: 0
-                }}
-                className={viewMode === 'list' ? 'max-w-none' : ''}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                : 'grid-cols-1'
+            }`}>
+              {[...Array(8)].map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-200 rounded-lg h-64 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-muted-foreground mb-4">
+                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No items found</h3>
+                <p className="text-sm">
+                  {searchQuery || activeFilters.length > 0 
+                    ? "Try adjusting your search terms or filters"
+                    : "No products available at the moment"
+                  }
+                </p>
+              </div>
+              {(searchQuery || activeFilters.length > 0) && (
+                <Button onClick={clearAllFilters} variant="outline">
+                  Clear all filters
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                : 'grid-cols-1'
+            }`}>
+              {products.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  product={item}
+                  onClick={() => window.location.href = `/item/${item.id}`}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Load More */}
-          <div className="text-center mt-12">
+          {/* <div className="text-center mt-12">
             <Button 
               size="lg" 
               variant="outline" 
@@ -332,7 +456,7 @@ const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most
             >
               Load More Items
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

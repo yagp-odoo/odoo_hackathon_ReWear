@@ -1,112 +1,95 @@
-import { useState, useEffect } from 'react';
-import { useToast } from './use-toast';
+import { useState, useEffect, useCallback } from 'react';
+import { apiService } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface WishlistItem {
   id: string;
-  title: string;
-  price: number;
-  originalPrice: number;
-  image: string;
-  condition: string;
-  size: string;
-  brand: string;
-  seller: string;
-  addedDate: string;
-  available: boolean;
+  user_id: string;
+  product_id: string;
+  added_at: string;
+  product: any; // Product details
 }
 
 export const useWishlist = () => {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated } = useAuth();
 
-  // Load wishlist from localStorage on mount
+  // Load wishlist only once when authenticated
   useEffect(() => {
-    const savedWishlist = localStorage.getItem('rewear-wishlist');
-    if (savedWishlist) {
-      try {
-        setWishlistItems(JSON.parse(savedWishlist));
-      } catch (error) {
-        console.error('Error loading wishlist from localStorage:', error);
-      }
+    if (isAuthenticated) {
+      loadWishlist();
+    } else {
+      setWishlist([]);
     }
-    setIsLoading(false);
+  }, [isAuthenticated]); // Only depend on authentication status
+
+  const loadWishlist = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await apiService.getWishlist();
+      setWishlist(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load wishlist');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  const addToWishlist = useCallback(async (productId: string) => {
+    if (!isAuthenticated) {
+      setError('Please login to add items to wishlist');
+      return false;
+    }
+
+    try {
+      await apiService.addToWishlist(productId);
+      // Reload wishlist to get updated data
+      await loadWishlist();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add to wishlist');
+      return false;
+    }
+  }, [isAuthenticated, loadWishlist]);
+
+  const removeFromWishlist = useCallback(async (productId: string) => {
+    if (!isAuthenticated) {
+      setError('Please login to remove items from wishlist');
+      return false;
+    }
+
+    try {
+      await apiService.removeFromWishlist(productId);
+      // Reload wishlist to get updated data
+      await loadWishlist();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove from wishlist');
+      return false;
+    }
+  }, [isAuthenticated, loadWishlist]);
+
+  const isInWishlist = useCallback((productId: string): boolean => {
+    return wishlist.some(item => item.product_id === productId);
+  }, [wishlist]);
+
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
-  // Save wishlist to localStorage whenever it changes
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('rewear-wishlist', JSON.stringify(wishlistItems));
-    }
-  }, [wishlistItems, isLoading]);
-
-  const addToWishlist = (item: Omit<WishlistItem, 'addedDate' | 'available'>) => {
-    setWishlistItems(prevItems => {
-      const existingItem = prevItems.find(wishlistItem => wishlistItem.id === item.id);
-      
-      if (existingItem) {
-        toast({
-          title: "Already in Wishlist",
-          description: "This item is already in your wishlist."
-        });
-        return prevItems;
-      } else {
-        const newItem: WishlistItem = {
-          ...item,
-          addedDate: new Date().toISOString(),
-          available: true
-        };
-        const newItems = [...prevItems, newItem];
-        toast({
-          title: "Added to Wishlist",
-          description: "Item has been added to your wishlist."
-        });
-        return newItems;
-      }
-    });
-  };
-
-  const removeFromWishlist = (itemId: string) => {
-    setWishlistItems(prevItems => prevItems.filter(item => item.id !== itemId));
-    toast({
-      title: "Removed from Wishlist",
-      description: "Item has been removed from your wishlist."
-    });
-  };
-
-  const clearWishlist = () => {
-    setWishlistItems([]);
-    toast({
-      title: "Wishlist Cleared",
-      description: "All items have been removed from your wishlist."
-    });
-  };
-
-  const isInWishlist = (itemId: string) => {
-    return wishlistItems.some(item => item.id === itemId);
-  };
-
-  const getWishlistCount = () => {
-    return wishlistItems.length;
-  };
-
-  const getAvailableItems = () => {
-    return wishlistItems.filter(item => item.available);
-  };
-
-  const getUnavailableItems = () => {
-    return wishlistItems.filter(item => !item.available);
-  };
-
   return {
-    wishlistItems,
+    wishlist,
     isLoading,
+    error,
     addToWishlist,
     removeFromWishlist,
-    clearWishlist,
     isInWishlist,
-    getWishlistCount,
-    getAvailableItems,
-    getUnavailableItems
+    clearError,
+    refreshWishlist: loadWishlist
   };
 }; 
