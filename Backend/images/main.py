@@ -28,6 +28,7 @@ app = FastAPI(
 # setup_middleware(app)
 origins = [
     "http://localhost:5173",
+    "https://rewear-frontend.vercel.app",
     "http://localhost:8080",
     "http://localhost:3000",
 ]  

@@ -31,6 +31,7 @@ SERVICE_NAME = "auth_service"
 SERVICE_URL = os.getenv("AUTH_SERVICE_URL")
 origins = [
     "http://localhost:5173",
+    "https://rewear-frontend.vercel.app"
     "http://localhost:8080",
     "http://localhost:3000",
     ]  
