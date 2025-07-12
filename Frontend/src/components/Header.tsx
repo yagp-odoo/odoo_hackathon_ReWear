@@ -20,6 +20,34 @@ export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
   const { getCartCount } = useCart();
   const { getWishlistCount } = useWishlist();
 
+  if (!isAuthenticated) {
+    // Minimal header for not-logged-in users
+    return (
+      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-glass-border/50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center space-x-2 group">
+            <div className="relative">
+              <Sparkles className="h-8 w-8 text-primary group-hover:text-primary-glow transition-colors" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-md group-hover:bg-primary/40 transition-all" />
+            </div>
+            <span className="text-2xl font-bold gradient-text">ReWear</span>
+          </Link>
+          <nav className="flex items-center space-x-6">
+            <Link to="/browse" className="text-foreground/80 hover:text-primary transition-colors font-medium">Browse</Link>
+            <Link to="/how-it-works" className="text-foreground/80 hover:text-primary transition-colors font-medium">How It Works</Link>
+            <Link to="/community" className="text-foreground/80 hover:text-primary transition-colors font-medium">Community</Link>
+            <Link to="/login">
+              <Button variant="ghost" className="hover-glow">Login</Button>
+            </Link>
+            <Link to="/signup">
+              <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary-glow hover:to-secondary-glow">Join</Button>
+            </Link>
+          </nav>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-glass-border/50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

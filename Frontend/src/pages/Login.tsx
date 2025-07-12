@@ -60,10 +60,10 @@ export default function Login() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6 flex flex-col items-center">
                 {/* Name Field (Signup only) */}
                 {isSignup && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 w-full">
                     <Label htmlFor="name" className="text-sm font-medium">
                       Full Name
                     </Label>
@@ -73,14 +73,14 @@ export default function Login() {
                       placeholder="Enter your full name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="glass border-glass-border/50 h-12"
+                      className="glass border-glass-border/50 h-12 w-full mx-auto"
                       required
                     />
                   </div>
                 )}
 
                 {/* Email Field */}
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="email" className="text-sm font-medium">
                     Email Address
                   </Label>
@@ -92,14 +92,14 @@ export default function Login() {
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-12 glass border-glass-border/50 h-12"
+                      className="pl-12 glass border-glass-border/50 h-12 w-full mx-auto"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Password Field */}
-                <div className="space-y-2">
+                <div className="space-y-2 w-full">
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
                   </Label>
@@ -111,7 +111,7 @@ export default function Login() {
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-12 pr-12 glass border-glass-border/50 h-12"
+                      className="pl-12 pr-12 glass border-glass-border/50 h-12 w-full mx-auto"
                       required
                     />
                     <button
@@ -130,7 +130,7 @@ export default function Login() {
 
                 {/* Confirm Password Field (Signup only) */}
                 {isSignup && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 w-full">
                     <Label htmlFor="confirmPassword" className="text-sm font-medium">
                       Confirm Password
                     </Label>
@@ -142,7 +142,7 @@ export default function Login() {
                         placeholder="Confirm your password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-12 glass border-glass-border/50 h-12"
+                        className="pl-12 glass border-glass-border/50 h-12 w-full mx-auto"
                         required
                       />
                     </div>

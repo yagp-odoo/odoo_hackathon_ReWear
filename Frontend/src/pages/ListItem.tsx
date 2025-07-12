@@ -98,45 +98,22 @@ export default function ListItem() {
             {/* Image Upload Section */}
             <Card className="glass-elevated border-glass-border/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 gradient-text">
+                <CardTitle className="flex justify-center items-center gap-2 gradient-text">
                   <Camera className="h-5 w-5" />
                   Photos (Required)
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground text-center">
                   Add up to 5 photos. The first photo will be your main image.
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {/* Existing Images */}
-                  {images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img 
-                        src={image} 
-                        alt={`Upload ${index + 1}`}
-                        className="w-full aspect-square object-cover rounded-lg border-2 border-glass-border/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-destructive rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-4 w-4 text-white" />
-                      </button>
-                      {index === 0 && (
-                        <Badge className="absolute bottom-2 left-2 bg-primary/90 text-primary-foreground">
-                          Main
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Upload Area */}
-                  {images.length < 5 && (
+                {/* Upload Area - always centered below title */}
+                {images.length < 5 && (
+                  <div className="flex justify-center mb-6">
                     <div
                       className={`aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all hover:border-primary/50 hover:bg-primary/5 ${
                         dragOver ? 'border-primary bg-primary/10' : 'border-glass-border/50'
-                      }`}
+                      } w-32 h-32`}
                       onDrop={handleDrop}
                       onDragOver={(e) => {
                         e.preventDefault();
@@ -150,9 +127,36 @@ export default function ListItem() {
                         Click or drag images here
                       </span>
                     </div>
-                  )}
-                </div>
-
+                  </div>
+                )}
+                {/* Uploaded Images Grid - centered below upload area */}
+                {images.length > 0 && (
+                  <div className="flex justify-center">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      {images.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={image} 
+                            alt={`Upload ${index + 1}`}
+                            className="w-full aspect-square object-cover rounded-lg border-2 border-glass-border/50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-destructive rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
+                          {index === 0 && (
+                            <Badge className="absolute bottom-2 left-2 bg-primary/90 text-primary-foreground">
+                              Main
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <input
                   id="image-upload"
                   type="file"
@@ -167,7 +171,7 @@ export default function ListItem() {
             {/* Item Details */}
             <Card className="glass-elevated border-glass-border/50">
               <CardHeader>
-                <CardTitle className="gradient-text">Item Details</CardTitle>
+                <CardTitle className="gradient-text text-center">Item Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Title */}
@@ -322,7 +326,7 @@ export default function ListItem() {
             {/* Publishing Options */}
             <Card className="glass-elevated border-glass-border/50">
               <CardHeader>
-                <CardTitle className="gradient-text">Ready to Share?</CardTitle>
+                <CardTitle className="gradient-text text-center">Ready to Share?</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col md:flex-row gap-4">

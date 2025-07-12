@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.env
+.env.*
+
+# Node
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite/React
+Frontend/.env
+Frontend/.env.*
+Frontend/node_modules/
+Frontend/dist/
+
+# Backend
+Backend/.env
+Backend/.env.*
+Backend/__pycache__/
+Backend/*.pyc
+Backend/*.pyo
+Backend/*.egg-info/
+
+# VSCode
+.vscode/
+
+# Misc
+*.swp
+*.swo
+.idea/ 
