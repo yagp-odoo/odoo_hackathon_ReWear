@@ -1,6 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
-// const PRODUCT_API_BASE_URL = import.meta.env.VITE_PRODUCT_API_URL || 'http://localhost:8002';
-const PRODUCT_API_BASE_URL ='http://localhost:8002';
+const PRODUCT_API_BASE_URL = import.meta.env.VITE_PRODUCT_API_URL || 'https://rewear-product.vercel.app';
 
 export interface LoginRequest {
   email: string;
