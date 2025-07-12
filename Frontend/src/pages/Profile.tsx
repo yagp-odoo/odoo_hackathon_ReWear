@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Edit, Save, MapPin, Calendar, Star, Award, TrendingUp, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
   const { toast } = useToast();
@@ -85,14 +86,15 @@ const Profile = () => {
                 <div className="flex-1">
                   <div className="flex items-center space-x-4 mb-2">
                     <h1 className="text-2xl font-bold text-foreground">{profileData.name}</h1>
-                    <Button 
-                      size="sm" 
-                      variant={isEditing ? "default" : "outline"}
-                      onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                    >
-                      {isEditing ? <Save className="h-4 w-4 mr-2" /> : <Edit className="h-4 w-4 mr-2" />}
-                      {isEditing ? 'Save' : 'Edit Profile'}
-                    </Button>
+                    <Link to="/edit-profile">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Profile
+                      </Button>
+                    </Link>
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">

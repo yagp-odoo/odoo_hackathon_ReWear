@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { ItemCard } from '@/components/ItemCard';
 import { Button } from '@/components/ui/button';
@@ -20,23 +20,26 @@ import {
   Edit3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService, User as UserType } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock user data
-const userData = {
-  name: 'Alex Rivera',
-  email: 'alex.rivera@email.com',
-  location: 'San Francisco, CA',
-  joinDate: 'March 2024',
-  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-  points: 850,
-  rating: 4.8,
-  totalSwaps: 23,
-  itemsListed: 15,
-  favoriteCount: 42,
+// Default user data structure
+const defaultUserData = {
+  name: 'User',
+  email: '',
+  location: '',
+  joinDate: '',
+  avatar: '',
+  points: 0,
+  rating: 0,
+  totalSwaps: 0,
+  itemsListed: 0,
+  favoriteCount: 0,
   ecoImpact: {
-    itemsSaved: 18,
-    co2Saved: '15.2 kg',
-    waterSaved: '1,240 L'
+    itemsSaved: 0,
+    co2Saved: '0 kg',
+    waterSaved: '0 L'
   }
 };
 
@@ -106,6 +109,57 @@ const recentActivity = [
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [userData, setUserData] = useState(defaultUserData);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setIsLoading(true);
+        const profile = await apiService.getProfile();
+        
+        // Transform API data to match our component structure
+        const transformedData = {
+          name: profile.name || 'User',
+          email: profile.email,
+          location: profile.location || 'Location not set',
+          joinDate: profile.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long' 
+          }) : 'Recently',
+          avatar: profile.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+          points: profile.points || 0,
+          rating: profile.rating || 0,
+          totalSwaps: profile.swaps || 0,
+          itemsListed: profile.items || 0,
+          favoriteCount: profile.favorites || 0,
+          ecoImpact: {
+            itemsSaved: profile.swaps || 0,
+            co2Saved: `${((profile.swaps || 0) * 0.66).toFixed(1)} kg`,
+            waterSaved: `${((profile.swaps || 0) * 54).toLocaleString()} L`
+          }
+        };
+        
+        setUserData(transformedData);
+      } catch (error: any) {
+        console.error('Failed to fetch user profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load user profile",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user, toast]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -120,16 +174,17 @@ export default function Dashboard() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
-      <Header 
-        isAuthenticated={true} 
-        user={{ 
-          name: userData.name, 
-          points: userData.points,
-          avatar: userData.avatar 
-        }} 
-      />
+      <Header />
       
       <div className="pt-24 pb-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -166,10 +221,12 @@ export default function Dashboard() {
               <div className="flex-1" />
 
               <div className="flex gap-3">
-                <Button variant="outline" className="glass border-glass-border/50 hover-glow">
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
+                <Link to="/edit-profile">
+                  <Button variant="outline" className="glass border-glass-border/50 hover-glow">
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                </Link>
                 <Link to="/list-item">
                   <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary-glow hover:to-secondary-glow">
                     <Plus className="h-4 w-4 mr-2" />

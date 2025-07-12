@@ -15,6 +15,7 @@ import Community from "./pages/Community";
 import AdminPanel from "./pages/AdminPanel";
 import ItemDetail from "./pages/ItemDetail";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import Wishlist from "./pages/Wishlist";
 import Cart from "./pages/Cart";
 import HowItWorks from "./pages/HowItWorks";
@@ -59,6 +60,11 @@ function AppRoutesWithFooter() {
         <Route path="/profile" element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/edit-profile" element={
+          <ProtectedRoute>
+            <EditProfile />
           </ProtectedRoute>
         } />
         <Route path="/wishlist" element={

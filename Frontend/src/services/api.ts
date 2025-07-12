@@ -20,15 +20,20 @@ export interface GoogleTokenRequest {
 }
 
 export interface User {
-  _id: string;
+  _id?: string;
   email: string;
-  name: string;
+  name?: string;
   role: string;
-  phone?: string;
+  phone?: string | number;
   location?: string;
   bio?: string;
   picture?: string;
   points?: number;
+  rating?: number;
+  swaps?: number;
+  items?: number;
+  favorites?: number;
+  // removed created_at and updated_at
 }
 
 export interface ApiResponse<T = any> {
@@ -104,9 +109,10 @@ class ApiService {
   }
 
   async getProfile(): Promise<User> {
-    return this.request<User>('/user/me', {
+    const response = await this.request<{user: User}>('/user/me', {
       method: 'GET',
     });
+    return response.user;
   }
 
   async checkAuth(): Promise<boolean> {
@@ -121,9 +127,19 @@ class ApiService {
   }
 
   async updateProfile(data: Partial<User>): Promise<ApiResponse> {
+    // Handle phone field conversion
+    const updateData = { ...data };
+    if (updateData.phone && typeof updateData.phone === 'string') {
+      // Try to convert to number if it's a valid number string
+      const phoneNum = parseInt(updateData.phone);
+      if (!isNaN(phoneNum)) {
+        updateData.phone = phoneNum;
+      }
+    }
+    
     return this.request<ApiResponse>('/user/update', {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(updateData),
     });
   }
 

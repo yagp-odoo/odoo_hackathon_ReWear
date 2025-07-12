@@ -223,12 +223,34 @@ def get_or_create_google_user(user_info: dict) -> dict:
         "picture": user_info.get('picture', ''),
         "role": "user",  # Default role
         "password": None,  # No password for Google users
-        "email_verified": user_info.get('email_verified', False)
+        "email_verified": user_info.get('email_verified', False),
+        "points": 0,
+        "swaps": 0,
+        "items": 0,
+        "favorites": 0,
+        "rating": 0.0
     }
     
     result = db1.get_collection('User').insert_one(new_user)
     new_user["_id"] = str(result.inserted_id)
     return new_user
+
+def serialize_user(user):
+    def convert(obj):
+        if isinstance(obj, dict):
+            # Remove all fields whose value is a datetime
+            return {k: convert(v) for k, v in obj.items() if not isinstance(v, datetime)}
+        elif isinstance(obj, list):
+            return [convert(i) for i in obj]
+        elif isinstance(obj, ObjectId):
+            return str(obj)
+        return obj
+
+    user_copy = convert(user)
+    if isinstance(user_copy, dict) and "_id" in user_copy:
+        user_copy["id"] = str(user_copy["_id"])
+        del user_copy["_id"]
+    return user_copy
 
 
 @app.post('/decode')
@@ -273,6 +295,11 @@ async def create_user(user: User):
             raise HTTPException(400, detail="Email already registered")
         user_dict = user.model_dump()
         user_dict["password"] = get_password_hash(user_dict["password"])
+        user_dict["points"] = 0
+        user_dict["swaps"] = 0
+        user_dict["items"] = 0
+        user_dict["favorites"] = 0
+        user_dict["rating"] = 0.0
         result = db1.get_collection('User').insert_one(user_dict)
         user_dict["_id"] = str(result.inserted_id)        
         expire_timedelta = timedelta(minutes=access_token_expire_time)
@@ -366,8 +393,7 @@ async def update_user(user_id: str, user: User):
             raise HTTPException(status_code=404, detail="User not found")
         
         updated_user = db1.get_collection('User').find_one({"_id": ObjectId(user_id)})
-        updated_user["_id"] = str(updated_user["_id"])
-        return JSONResponse(status_code=200, content=updated_user)
+        return JSONResponse(status_code=200, content=serialize_user(updated_user))
     except HTTPException as he:
         raise he
     except Exception as e:
@@ -429,10 +455,7 @@ async def user_logout(request: Request):
 async def get_all_users():
     try:
         users = db1.get_collection('User').find()
-        user_list = []
-        for user in users:
-            user["_id"] = str(user["_id"])
-            user_list.append(user)
+        user_list = [serialize_user(user) for user in users]
         return {"users": user_list}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -489,9 +512,7 @@ async def update_profile(data: UpdateUser, request: Request):
             raise HTTPException(status_code=404, detail="User not found")
 
         updated_user = db1.get_collection('User').find_one({"email": update_fields.get("email", user_email)})
-        updated_user["_id"] = str(updated_user["_id"])
-
-        return JSONResponse(status_code=200, content={"message": "Profile updated successfully", "user": updated_user})
+        return JSONResponse(status_code=200, content={"message": "Profile updated successfully", "user": serialize_user(updated_user)})
     except HTTPException as he:
         raise he
     except Exception as e:
@@ -515,13 +536,7 @@ async def google_token_login(request: GoogleTokenRequest):
         response = JSONResponse(
             content={
                 "message": "Google login successful",
-                "user": {
-                    "id": user["_id"],
-                    "email": user["email"],
-                    "name": user["name"],
-                    "picture": user.get("picture", ""),
-                    "role": user.get("role", "user")
-                }
+                "user": serialize_user(user)
             }
         )
         response.set_cookie(
@@ -633,11 +648,23 @@ async def get_my_profile(request: Request):
         if not user_record:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Exclude sensitive fields
-        user_record.pop("password", None)
-        user_record["_id"] = str(user_record["_id"])
+        # Create Usermainprofile response
+        profile_data = {
+            "email": user_record.get("email"),
+            "name": user_record.get("name"),
+            "phone": user_record.get("phone"),
+            "location": user_record.get("location"),
+            "rating": user_record.get("rating", 0.0),
+            "points": user_record.get("points", 0),
+            "swaps": user_record.get("swaps", 0),
+            "items": user_record.get("items", 0),
+            "favorites": user_record.get("favorites", 0),
+            "role": user_record.get("role", "user"),
+            "picture": user_record.get("picture"),
+            "bio": user_record.get("bio")
+        }
 
-        return JSONResponse(status_code=200, content={"user": user_record})
+        return JSONResponse(status_code=200, content={"user": serialize_user(profile_data)})
     except HTTPException as he:
         raise he
     except Exception as e:

@@ -47,6 +47,18 @@ class UpdateUser(BaseModel):
     role: Optional[str] = "user"
     password: Optional[str] = None
 
+class Usermainprofile(BaseModel):
+    email: str
+    name: Optional[str] = None
+    phone: str | int | None = None
+    location: Optional[str] = None
+    rating: Optional[float] = None
+    points: Optional[int] = 0
+    swaps: Optional[int] = 0
+    items: Optional[int] = 0
+    favorites: Optional[int] = 0
+    role: Optional[str] = "user"
+
 class GoogleTokenRequest(BaseModel):
     credential: str 
 
