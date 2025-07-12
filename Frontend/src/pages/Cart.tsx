@@ -8,68 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, Trash2, ShoppingBag, CreditCard, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/hooks/use-cart';
 
 const Cart = () => {
   const { toast } = useToast();
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      title: 'Vintage Denim Jacket',
-      price: 45,
-      originalPrice: 120,
-      image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400',
-      condition: 'Excellent',
-      size: 'M',
-      brand: 'Levi\'s',
-      seller: 'Sarah M.',
-      quantity: 1,
-      type: 'purchase'
-    },
-    {
-      id: 2,
-      title: 'Designer Silk Scarf',
-      price: 35,
-      originalPrice: 80,
-      image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400',
-      condition: 'Like New',
-      size: 'One Size',
-      brand: 'Hermès',
-      seller: 'Emma W.',
-      quantity: 1,
-      type: 'purchase'
-    }
-  ]);
-
+  const { 
+    cartItems, 
+    removeFromCart, 
+    updateQuantity, 
+    clearCart, 
+    getCartTotal 
+  } = useCart();
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
 
-  const updateQuantity = (itemId: number, newQuantity: number) => {
-    if (newQuantity === 0) {
-      removeItem(itemId);
-      return;
-    }
-    setCartItems(items =>
-      items.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
 
-  const removeItem = (itemId: number) => {
-    setCartItems(items => items.filter(item => item.id !== itemId));
-    toast({
-      title: "Item Removed",
-      description: "Item has been removed from your cart."
-    });
-  };
-
-  const clearCart = () => {
-    setCartItems([]);
-    toast({
-      title: "Cart Cleared",
-      description: "All items have been removed from your cart."
-    });
-  };
 
   const applyPromoCode = () => {
     if (promoCode.toLowerCase() === 'rewear10') {
@@ -87,7 +40,7 @@ const Cart = () => {
     }
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = getCartTotal();
   const discountAmount = subtotal * discount;
   const shipping = subtotal > 50 ? 0 : 8.99;
   const tax = (subtotal - discountAmount) * 0.08;
@@ -194,7 +147,7 @@ const Cart = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                         >
                           <Trash2 className="h-4 w-4" />

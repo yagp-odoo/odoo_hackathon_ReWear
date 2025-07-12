@@ -84,16 +84,21 @@ const mockItems = [
   }
 ];
 
-const categories = ['All', 'Dresses', 'Jackets', 'Sweaters', 'Blazers', 'Pants', 'Shoes', 'Accessories'];
-const sizes = ['All', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const conditions = ['All', 'Excellent', 'Good', 'Fair'];
-const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most Popular'];
+const categories = ['All', 'Dresses', 'Jackets', 'Sweaters', 'Blazers', 'Pants', 'Shoes', 'Accessories', 'Tops', 'Bottoms', 'Outerwear', 'Formal Wear'];
+const sizes = ['All', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size'];
+const conditions = ['All', 'Like New', 'Excellent', 'Good', 'Fair', 'Vintage'];
+const brands = ['All', 'Levi\'s', 'Nike', 'Adidas', 'Zara', 'H&M', 'Uniqlo', 'Everlane', 'Patagonia', 'Vintage', 'Designer'];
+const colors = ['All', 'Black', 'White', 'Blue', 'Red', 'Green', 'Yellow', 'Pink', 'Purple', 'Brown', 'Gray', 'Multi'];
+const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most Popular', 'Most Liked', 'Recently Added'];
 
 export default function Browse() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSize, setSelectedSize] = useState('All');
   const [selectedCondition, setSelectedCondition] = useState('All');
+  const [selectedBrand, setSelectedBrand] = useState('All');
+  const [selectedColor, setSelectedColor] = useState('All');
+  const [priceRange, setPriceRange] = useState([0, 500]);
   const [sortBy, setSortBy] = useState('Newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -102,12 +107,18 @@ export default function Browse() {
     selectedCategory !== 'All' && selectedCategory,
     selectedSize !== 'All' && `Size ${selectedSize}`,
     selectedCondition !== 'All' && selectedCondition,
+    selectedBrand !== 'All' && selectedBrand,
+    selectedColor !== 'All' && selectedColor,
+    priceRange[1] < 500 && `Under $${priceRange[1]}`,
   ].filter(Boolean);
 
   const clearAllFilters = () => {
     setSelectedCategory('All');
     setSelectedSize('All');
     setSelectedCondition('All');
+    setSelectedBrand('All');
+    setSelectedColor('All');
+    setPriceRange([0, 500]);
     setSearchQuery('');
   };
 
@@ -226,6 +237,71 @@ export default function Browse() {
                 </div>
               </div>
             </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="mt-6 pt-6 border-t border-glass-border/50 slide-up">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                    <SelectTrigger className="glass border-glass-border/50">
+                      <SelectValue placeholder="Brand" />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      {brands.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedColor} onValueChange={setSelectedColor}>
+                    <SelectTrigger className="glass border-glass-border/50">
+                      <SelectValue placeholder="Color" />
+                    </SelectTrigger>
+                    <SelectContent className="glass border-glass-border">
+                      {colors.map((color) => (
+                        <SelectItem key={color} value={color}>
+                          {color}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Price Range</label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        placeholder="Min"
+                        className="glass border-glass-border/50"
+                        value={priceRange[0]}
+                        onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                      />
+                      <span className="text-muted-foreground">-</span>
+                      <Input
+                        type="number"
+                        placeholder="Max"
+                        className="glass border-glass-border/50"
+                        value={priceRange[1]}
+                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button
+                      variant="outline"
+                      onClick={clearAllFilters}
+                      className="w-full glass border-glass-border/50 hover-glow"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Clear Filters
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Active Filters */}
             {activeFilters.length > 0 && (

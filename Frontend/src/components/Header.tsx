@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Menu, X, User, ShoppingBag, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCart } from '@/hooks/use-cart';
+import { useWishlist } from '@/hooks/use-wishlist';
 
 interface HeaderProps {
   isAuthenticated?: boolean;
@@ -15,6 +17,8 @@ interface HeaderProps {
 
 export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { getCartCount } = useCart();
+  const { getWishlistCount } = useWishlist();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-glass-border/50">
@@ -63,13 +67,23 @@ export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
                 {/* User Menu */}
                 <div className="flex items-center space-x-2">
                   <Link to="/wishlist">
-                    <Button variant="ghost" size="icon" className="hover-glow">
+                    <Button variant="ghost" size="icon" className="hover-glow relative">
                       <Heart className="h-5 w-5" />
+                      {getWishlistCount() > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {getWishlistCount()}
+                        </span>
+                      )}
                     </Button>
                   </Link>
                   <Link to="/cart">
-                    <Button variant="ghost" size="icon" className="hover-glow">
+                    <Button variant="ghost" size="icon" className="hover-glow relative">
                       <ShoppingBag className="h-5 w-5" />
+                      {getCartCount() > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {getCartCount()}
+                        </span>
+                      )}
                     </Button>
                   </Link>
                   <Link to="/dashboard">
@@ -152,6 +166,20 @@ export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Points</span>
                     <span className="text-accent font-semibold">{user.points || 0}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/wishlist" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        <Heart className="h-4 w-4 mr-2" />
+                        Wishlist
+                      </Button>
+                    </Link>
+                    <Link to="/cart" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        <ShoppingBag className="h-4 w-4 mr-2" />
+                        Cart
+                      </Button>
+                    </Link>
                   </div>
                   <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                     <Button className="w-full">Dashboard</Button>

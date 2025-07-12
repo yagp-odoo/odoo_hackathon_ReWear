@@ -9,13 +9,21 @@ import { Header } from '@/components/Header';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic
-    console.log('Login attempt:', { email, password });
+    if (isSignup) {
+      // Handle signup logic
+      console.log('Signup attempt:', { name, email, password, confirmPassword });
+    } else {
+      // Handle login logic
+      console.log('Login attempt:', { email, password });
+    }
   };
 
   return (
@@ -25,27 +33,52 @@ export default function Login() {
       <div className="pt-24 pb-8 flex items-center justify-center min-h-screen">
         <div className="w-full max-w-md mx-4">
           {/* Logo & Welcome */}
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-4">
+          <div className="text-center mb-8 fade-in">
+            <div className="flex items-center justify-center space-x-2 mb-6">
               <div className="relative">
-                <Sparkles className="h-10 w-10 text-primary" />
+                <Sparkles className="h-12 w-12 text-primary pulse-glow" />
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-md" />
               </div>
-              <span className="text-3xl font-bold gradient-text">ReWear</span>
+              <span className="text-4xl font-bold gradient-text">ReWear</span>
             </div>
-            <h1 className="text-2xl font-bold mb-2">Welcome Back!</h1>
-            <p className="text-muted-foreground">
-              Ready to continue your sustainable fashion journey?
+            <h1 className="text-3xl font-bold mb-3 gradient-text">
+              {isSignup ? 'Join ReWear' : 'Welcome Back!'}
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              {isSignup 
+                ? 'Start your sustainable fashion journey today'
+                : 'Ready to continue your sustainable fashion journey?'
+              }
             </p>
           </div>
 
           {/* Login Form */}
-          <Card className="glass-elevated border-glass-border/50">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="gradient-text">Sign In</CardTitle>
+          <Card className="glass-elevated border-glass-border/50 slide-up">
+            <CardHeader className="text-center pb-6">
+              <CardTitle className="gradient-text text-2xl">
+                {isSignup ? 'Create Account' : 'Sign In'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name Field (Signup only) */}
+                {isSignup && (
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="glass border-glass-border/50 h-12"
+                      required
+                    />
+                  </div>
+                )}
+
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
@@ -95,22 +128,45 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Forgot Password */}
-                <div className="text-right">
-                  <Link 
-                    to="/forgot-password" 
-                    className="text-sm text-primary hover:text-primary-glow transition-colors"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
+                {/* Confirm Password Field (Signup only) */}
+                {isSignup && (
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                      Confirm Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="pl-12 glass border-glass-border/50 h-12"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Forgot Password (Login only) */}
+                {!isSignup && (
+                  <div className="text-right">
+                    <Link 
+                      to="/forgot-password" 
+                      className="text-sm text-primary hover:text-primary-glow transition-colors"
+                    >
+                      Forgot your password?
+                    </Link>
+                  </div>
+                )}
 
                 {/* Submit Button */}
                 <Button 
                   type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary-glow hover:to-secondary-glow h-12 text-lg font-semibold hover-lift"
+                  className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary-glow hover:to-secondary-glow h-14 text-lg font-semibold hover-lift pulse-glow"
                 >
-                  Sign In
+                  {isSignup ? 'Create Account' : 'Sign In'}
                 </Button>
 
                 {/* Divider */}
@@ -165,16 +221,16 @@ export default function Login() {
             </CardContent>
           </Card>
 
-          {/* Sign Up Link */}
+          {/* Toggle Signup/Login */}
           <div className="text-center mt-6">
             <p className="text-muted-foreground">
-              Don't have an account?{' '}
-              <Link 
-                to="/signup" 
+              {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button 
+                onClick={() => setIsSignup(!isSignup)}
                 className="text-primary hover:text-primary-glow font-semibold transition-colors"
               >
-                Join ReWear
-              </Link>
+                {isSignup ? 'Sign In' : 'Join ReWear'}
+              </button>
             </p>
           </div>
         </div>

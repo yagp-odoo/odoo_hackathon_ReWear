@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Share2, ArrowLeft, MessageCircle, Star, Truck, Shield, RotateCcw } from 'lucide-react';
+import { Heart, Share2, ArrowLeft, MessageCircle, Star, Truck, Shield, RotateCcw, ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useWishlist } from '@/hooks/use-wishlist';
+import { useCart } from '@/hooks/use-cart';
 
 const ItemDetail = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
   
   // Mock item data - in real app, fetch based on ID
   const item = {
@@ -55,12 +58,40 @@ const ItemDetail = () => {
     }
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    toast({
-      title: isLiked ? "Removed from wishlist" : "Added to wishlist",
-      description: isLiked ? "Item removed from your wishlist" : "Item added to your wishlist"
-    });
+  const handleWishlistToggle = () => {
+    const itemData = {
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      image: item.images[0],
+      condition: item.condition,
+      size: item.size,
+      brand: item.brand,
+      seller: item.seller.name
+    };
+
+    if (isInWishlist(item.id)) {
+      removeFromWishlist(item.id);
+    } else {
+      addToWishlist(itemData);
+    }
+  };
+
+  const handleAddToCart = () => {
+    const itemData = {
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      image: item.images[0],
+      condition: item.condition,
+      size: item.size,
+      brand: item.brand,
+      seller: item.seller.name,
+      type: 'purchase' as const
+    };
+    addToCart(itemData);
   };
 
   const handleSwapRequest = () => {
@@ -100,18 +131,18 @@ const ItemDetail = () => {
                     className="w-full h-96 object-cover"
                   />
                   <button 
-                    onClick={handleLike}
+                    onClick={handleWishlistToggle}
                     className={`absolute top-4 right-4 p-2 rounded-full glass ${
-                      isLiked ? 'text-red-500' : 'text-white hover:text-red-500'
+                      isInWishlist(item.id) ? 'text-red-500' : 'text-white hover:text-red-500'
                     } transition-colors`}
                   >
-                    <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                    <Heart className={`h-5 w-5 ${isInWishlist(item.id) ? 'fill-current' : ''}`} />
                   </button>
                 </div>
               </Card>
               
               {/* Image Thumbnails */}
-              <div className="flex space-x-2">
+              <div className="flex justify-center space-x-2">
                 {item.images.map((image, index) => (
                   <button
                     key={index}
@@ -178,14 +209,19 @@ const ItemDetail = () => {
                       Request Swap
                     </Button>
                     <Button 
+                      onClick={handleAddToCart}
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      <ShoppingBag className="h-4 w-4 mr-2" />
+                      Add to Cart - ${item.price}
+                    </Button>
+                    <Button 
                       onClick={handlePointsRedemption}
                       variant="outline" 
                       className="w-full"
                     >
                       Redeem with {item.swapOptions.pointsRedemption} Points
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      Buy Now - ${item.price}
                     </Button>
                   </div>
                 </CardContent>

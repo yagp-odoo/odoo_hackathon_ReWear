@@ -15,6 +15,7 @@ import ItemDetail from "./pages/ItemDetail";
 import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
 import Cart from "./pages/Cart";
+import HowItWorks from "./pages/HowItWorks";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Login />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/list-item" element={<ListItem />} />
           <Route path="/community" element={<Community />} />
           <Route path="/admin" element={<AdminPanel />} />

@@ -7,91 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { ItemCard } from '@/components/ItemCard';
 import { Heart, Filter, Grid, List, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useWishlist } from '@/hooks/use-wishlist';
 
 const Wishlist = () => {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [wishlistItems, setWishlistItems] = useState([
-    {
-      id: 1,
-      title: 'Vintage Denim Jacket',
-      price: 45,
-      originalPrice: 120,
-      image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400',
-      condition: 'Excellent',
-      size: 'M',
-      brand: 'Levi\'s',
-      seller: 'Sarah M.',
-      likes: 24,
-      isLiked: true,
-      addedDate: '2024-03-10',
-      available: true
-    },
-    {
-      id: 2,
-      title: 'Designer Silk Scarf',
-      price: 35,
-      originalPrice: 80,
-      image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=400',
-      condition: 'Like New',
-      size: 'One Size',
-      brand: 'Hermès',
-      seller: 'Emma W.',
-      likes: 18,
-      isLiked: true,
-      addedDate: '2024-03-08',
-      available: true
-    },
-    {
-      id: 3,
-      title: 'Leather Ankle Boots',
-      price: 65,
-      originalPrice: 150,
-      image: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d2f?w=400',
-      condition: 'Good',
-      size: '8',
-      brand: 'Cole Haan',
-      seller: 'Alex C.',
-      likes: 32,
-      isLiked: true,
-      addedDate: '2024-03-05',
-      available: false
-    },
-    {
-      id: 4,
-      title: 'Cashmere Sweater',
-      price: 55,
-      originalPrice: 140,
-      image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400',
-      condition: 'Excellent',
-      size: 'S',
-      brand: 'Everlane',
-      seller: 'Maya P.',
-      likes: 41,
-      isLiked: true,
-      addedDate: '2024-03-02',
-      available: true
-    }
-  ]);
+  const { 
+    wishlistItems, 
+    removeFromWishlist, 
+    clearWishlist, 
+    getAvailableItems, 
+    getUnavailableItems 
+  } = useWishlist();
 
-  const removeFromWishlist = (itemId: number) => {
-    setWishlistItems(items => items.filter(item => item.id !== itemId));
-    toast({
-      title: "Item Removed",
-      description: "Item has been removed from your wishlist."
-    });
-  };
-
-  const clearWishlist = () => {
-    setWishlistItems([]);
-    toast({
-      title: "Wishlist Cleared",
-      description: "All items have been removed from your wishlist."
-    });
-  };
-
-  const availableItems = wishlistItems.filter(item => item.available);
-  const unavailableItems = wishlistItems.filter(item => !item.available);
+  const availableItems = getAvailableItems();
+  const unavailableItems = getUnavailableItems();
 
   return (
     <div className="min-h-screen bg-gradient-dark">
