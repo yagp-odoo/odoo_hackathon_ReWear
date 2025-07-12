@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { ItemCard } from '@/components/ItemCard';
 import { Button } from '@/components/ui/button';
@@ -19,77 +19,7 @@ import {
   SlidersHorizontal,
   X
 } from 'lucide-react';
-
-// Mock data
-const mockItems = [
-  {
-    id: '1',
-    title: 'Vintage Denim Jacket',
-    description: 'Classic 90s oversized denim jacket with unique distressing. Perfect for layering and adding edge to any outfit.',
-    images: ['https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400'],
-    category: 'Jackets',
-    size: 'M',
-    condition: 'Excellent',
-    points: 150,
-    owner: {
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b547?w=100',
-      rating: 4.8
-    }
-  },
-  {
-    id: '2',
-    title: 'Designer Midi Dress',
-    description: 'Elegant floral midi dress from a luxury brand. Worn only once to a wedding. Perfect for special occasions.',
-    images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400'],
-    category: 'Dresses',
-    size: 'S',
-    condition: 'Excellent',
-    points: 300,
-    owner: {
-      name: 'Emma Wilson',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-      rating: 4.9
-    }
-  },
-  {
-    id: '3',
-    title: 'Cozy Knit Sweater',
-    description: 'Soft merino wool sweater in cream color. Minimal wear, incredibly comfortable for fall and winter.',
-    images: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400'],
-    category: 'Sweaters',
-    size: 'L',
-    condition: 'Good',
-    points: 120,
-    owner: {
-      name: 'Alex Rivera',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      rating: 4.7
-    }
-  },
-  {
-    id: '4',
-    title: 'Statement Blazer',
-    description: 'Bold geometric print blazer that turns heads. Professional yet fun, perfect for creative workplaces.',
-    images: ['https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400'],
-    category: 'Blazers',
-    size: 'M',
-    condition: 'Good',
-    points: 200,
-    owner: {
-      name: 'Maya Patel',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-      rating: 4.6
-    }
-  }
-];
-
-const categories = ['All', 'Dresses', 'Jackets', 'Sweaters', 'Blazers', 'Pants', 'Shoes', 'Accessories', 'Tops', 'Bottoms', 'Outerwear', 'Formal Wear'];
-const sizes = ['All', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size'];
-const conditions = ['All', 'Like New', 'Excellent', 'Good', 'Fair', 'Vintage'];
-const brands = ['All', 'Levi\'s', 'Nike', 'Adidas', 'Zara', 'H&M', 'Uniqlo', 'Everlane', 'Patagonia', 'Vintage', 'Designer'];
-const colors = ['All', 'Black', 'White', 'Blue', 'Red', 'Green', 'Yellow', 'Pink', 'Purple', 'Brown', 'Gray', 'Multi'];
-const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most Popular', 'Most Liked', 'Recently Added'];
+import { apiService, Product } from '@/services/api';
 
 export default function Browse() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,6 +32,37 @@ export default function Browse() {
   const [sortBy, setSortBy] = useState('Newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const categories = ['All', 'Dresses', 'Jackets', 'Sweaters', 'Blazers', 'Pants', 'Shoes', 'Accessories', 'Tops', 'Bottoms', 'Outerwear', 'Formal Wear'];
+const sizes = ['All', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size'];
+const conditions = ['All', 'Like New', 'Excellent', 'Good', 'Fair', 'Vintage'];
+const brands = ['All', 'Levi\'s', 'Nike', 'Adidas', 'Zara', 'H&M', 'Uniqlo', 'Everlane', 'Patagonia', 'Vintage', 'Designer'];
+const colors = ['All', 'Black', 'White', 'Blue', 'Red', 'Green', 'Yellow', 'Pink', 'Purple', 'Brown', 'Gray', 'Multi'];
+const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Most Popular', 'Most Liked', 'Recently Added'];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        // You can add filter/search logic here
+        let fetched;
+        if (searchQuery || selectedCategory !== 'All') {
+          fetched = await apiService.searchProducts({
+            name: searchQuery || undefined,
+            category: selectedCategory !== 'All' ? selectedCategory : undefined
+          });
+        } else {
+          fetched = await apiService.getAllProducts();
+        }
+        setProducts(fetched);
+      } catch (error) {
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [searchQuery, selectedCategory]);
 
   const activeFilters = [
     selectedCategory !== 'All' && selectedCategory,
@@ -124,7 +85,7 @@ export default function Browse() {
 
   return (
     <div className="min-h-screen">
-      <Header isAuthenticated={true} user={{ name: 'You', points: 250 }} />
+      <Header />
       
       {/* Page Header */}
       <div className="pt-24 pb-8">
@@ -328,7 +289,7 @@ export default function Browse() {
           {/* Results */}
           <div className="mb-6">
             <p className="text-muted-foreground">
-              Showing <span className="text-foreground font-semibold">{mockItems.length}</span> items
+              Showing <span className="text-foreground font-semibold">{products.length}</span> items
               {searchQuery && (
                 <span> for "<span className="text-primary">{searchQuery}</span>"</span>
               )}
@@ -341,10 +302,22 @@ export default function Browse() {
               ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
               : 'grid-cols-1'
           }`}>
-            {mockItems.map((item) => (
+            {products.map((item) => (
               <ItemCard
                 key={item.id}
-                {...item}
+                id={item.id}
+                title={item.title}
+                description={item.description || ''}
+                images={item.images || []}
+                category={item.category || ''}
+                size={item.size || 'N/A'}
+                condition={item.condition || 'N/A'}
+                points={item.points || item.price || 0}
+                owner={{
+                  name: item.owner || item.owner_id || 'Unknown',
+                  avatar: '',
+                  rating: 0
+                }}
                 className={viewMode === 'list' ? 'max-w-none' : ''}
               />
             ))}

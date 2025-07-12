@@ -1,4 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+// const PRODUCT_API_BASE_URL = import.meta.env.VITE_PRODUCT_API_URL || 'http://localhost:8002';
+const PRODUCT_API_BASE_URL ='http://localhost:8002';
 
 export interface LoginRequest {
   email: string;
@@ -43,18 +45,36 @@ export interface ApiResponse<T = any> {
   role?: string;
 }
 
+export interface Product {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  size?: string;
+  condition?: string;
+  points?: number;
+  owner?: string;
+  category?: string;
+  images?: string[];
+  owner_id?: string;
+  status?: string;
+}
+
 class ApiService {
   private baseURL: string;
+  private productBaseURL: string;
 
   constructor() {
     this.baseURL = API_BASE_URL;
+    this.productBaseURL = PRODUCT_API_BASE_URL;
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    useProductApi: boolean = false
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = `${useProductApi ? this.productBaseURL : this.baseURL}${endpoint}`;
     
     const config: RequestInit = {
       ...options,
@@ -158,6 +178,47 @@ class ApiService {
       method: 'PUT',
       body: JSON.stringify({ email, password }),
     });
+  }
+
+  // Product APIs
+  async getAllProducts(): Promise<Product[]> {
+    return this.request<Product[]>('/product/all', { method: 'GET' }, true);
+  }
+
+  async getProductById(id: string): Promise<Product> {
+    return this.request<Product>(`/product/${id}`, { method: 'GET' }, true);
+  }
+
+  async addProduct(product: Omit<Product, 'id'>): Promise<{ message: string; product: Product }> {
+    return this.request<{ message: string; product: Product }>('/product', {
+      method: 'POST',
+      body: JSON.stringify(product),
+    }, true);
+  }
+
+  async updateProduct(id: string, product: Partial<Product>): Promise<{ message: string; product_id: string }> {
+    return this.request<{ message: string; product_id: string }>(`/product/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(product),
+    }, true);
+  }
+
+  async deleteProduct(id: string): Promise<{ message: string; product_id: string }> {
+    return this.request<{ message: string; product_id: string }>(`/product/${id}`, {
+      method: 'DELETE' }, true);
+  }
+
+  async searchProducts(params: { name?: string; category?: string; min_price?: number; max_price?: number }): Promise<Product[]> {
+    const query = new URLSearchParams();
+    if (params.name) query.append('name', params.name);
+    if (params.category) query.append('category', params.category);
+    if (params.min_price !== undefined) query.append('min_price', params.min_price.toString());
+    if (params.max_price !== undefined) query.append('max_price', params.max_price.toString());
+    return this.request<Product[]>(`/product/search?${query.toString()}`, { method: 'GET' }, true);
+  }
+
+  async getProductsByUser(userId: string): Promise<Product[]> {
+    return this.request<Product[]>(`/product/user/${userId}`, { method: 'GET' }, true);
   }
 }
 

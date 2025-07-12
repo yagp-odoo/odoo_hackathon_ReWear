@@ -68,3 +68,4 @@ class GoogleUser(BaseModel):
     name: str
     picture: Optional[str] = None
     email_verified: bool = True
+

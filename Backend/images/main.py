@@ -13,7 +13,7 @@ import httpx
 from PIL import Image
 from starlette.middleware.sessions import SessionMiddleware
 import io
-from app.auth import get_current_user, require_role
+# from app.auth import get_current_user, require_role
 # from app.middleware import setup_middleware
 
 
@@ -89,7 +89,7 @@ def validate_image(file: UploadFile) -> tuple[bytes, str, int]:
 @app.post("/upload", response_model=List[ImageResponse])
 async def upload_image(
     file: List[UploadFile] = File(...),
-    folder: str = "properties",
+    folder: str = "product",
     # current_user: dict = Depends(get_current_user)
 ):
     try:
@@ -147,7 +147,7 @@ async def transform_image(
 @app.delete("/{public_id}")
 async def delete_image(
     public_id: str,
-    current_user: dict = Depends(require_role("admin"))
+    # current_user: dict = Depends(require_role("admin"))
 ):
     """
     Delete an image from Cloudinary (admin only)
