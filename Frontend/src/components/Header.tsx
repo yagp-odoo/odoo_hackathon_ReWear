@@ -1,24 +1,17 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Menu, X, User, ShoppingBag, Heart } from 'lucide-react';
+import { Sparkles, Menu, X, User, ShoppingBag, Heart, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/hooks/use-cart';
 import { useWishlist } from '@/hooks/use-wishlist';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface HeaderProps {
-  isAuthenticated?: boolean;
-  user?: {
-    name: string;
-    avatar?: string;
-    points?: number;
-  };
-}
-
-export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
+export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { getCartCount } = useCart();
   const { getWishlistCount } = useWishlist();
+  const { user, isAuthenticated, logout } = useAuth();
 
   if (!isAuthenticated) {
     // Minimal header for not-logged-in users
@@ -116,9 +109,9 @@ export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
                   </Link>
                   <Link to="/dashboard">
                     <Button variant="ghost" size="icon" className="hover-glow">
-                      {user.avatar ? (
+                      {user.picture ? (
                         <img 
-                          src={user.avatar} 
+                          src={user.picture} 
                           alt={user.name}
                           className="h-8 w-8 rounded-full border-2 border-primary/50"
                         />
@@ -127,6 +120,14 @@ export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
                       )}
                     </Button>
                   </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="hover-glow"
+                    onClick={logout}
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
                 </div>
               </>
             ) : (
@@ -212,6 +213,17 @@ export const Header = ({ isAuthenticated = false, user }: HeaderProps) => {
                   <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
                     <Button className="w-full">Dashboard</Button>
                   </Link>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
